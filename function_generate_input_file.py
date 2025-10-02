@@ -11,13 +11,13 @@ def write_input_file(E0, h, angle, mesh_size, output_dir="."):
         f.write("*include, input=" + os.path.join(mesh_dir, "include_nodes.inp") + "\n")
 
         f.write("********************************** E L E M E N T S ****************************\n")
-        f.write("*element, type=Hexa8, provider=displacementelement, elset=bottom-body\n")
+        f.write("*element, type=C3D8, provider=edelweiss, elset=bottom-body\n")
         f.write("*include, input=" + os.path.join(mesh_dir, "include_elset_bottom.inp") + "\n\n")
 
         f.write("*element, type=IQuad4, provider=interfaceelement, elset=interface-body\n")
         f.write("*include, input=" + os.path.join(mesh_dir, "include_elset_interface.inp") + "\n\n")
 
-        f.write("*element, type=Hexa8, provider=displacementelement, elset=top-body\n")
+        f.write("*element, type=C3D8, provider=edelweiss, elset=top-body\n")
         f.write("*include, input=" + os.path.join(mesh_dir, "include_elset_top.inp") + "\n\n")
 
         f.write("********************************** N O D E S E T S **********************************\n")
@@ -34,17 +34,16 @@ def write_input_file(E0, h, angle, mesh_size, output_dir="."):
         f.write("*material, name=LinearElastic, id=linearelastic_body_2, provider=edelweissmaterial\n")
         f.write("**Isotropic\n**E    nu\n1.0, 0.3\n\n")
 
-        f.write("*material, name=marmotinterfacematerial, id=ElasticInterfaceMaterial, provider = edelweissmaterial\n")
-        f.write("** E_M, nu_M, E_I, nu_I, E_0 , nu_0, h, MaterialID \n")
-        f.write(f"1.0, 0.3, 1.0, 0.3, {E0}, 0.3, {h}, 0\n\n")
-
+        f.write("*material, name=marmotViscoElasticInterfacematerial , id=ViscoElasticInterfaceMaterial, provider = edelweissmaterial\n")
+        f.write("** E_M, nu_M, E_I, nu_I, E_0, nu_0,   h,   m_Ju, n_Ju, nKelvin_Ju, minTau_Ju, m_Js,   n_Js, nKelvin_Js,  minTau_Js, timeToDays, MaterialID \n")
+        f.write(f"1.0, 0.3, 1.0, 0.3, {E0}, 0.3, {h}, 0, $m_Ju, $n_Ju, 1, 1e-2,  $m_Js, $n_Js, 1,  1e-2,        1e0, 0\n\n")
         f.write("*section, name=section1, material=linearelastic_body_2, type=solid\n")
         f.write("bottom-body\n\n")
 
         f.write("*section, name=section2, material=linearelastic_body_1, type=solid\n")
         f.write("top-body\n\n")
 
-        f.write("*section, name=section3, material=ElasticInterfaceMaterial, type=solid\n")
+        f.write("*section, name=section3, material=ViscoElasticInterfaceMaterial, type=solid\n")
         f.write("interface-body\n\n")
 
         f.write("*job, name=IQuad4job, domain=3d\n")

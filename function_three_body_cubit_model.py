@@ -133,6 +133,16 @@ def generate_cubit_model(cut_angle, mesh_size, output_dir="."):
         cubit.cmd(f"volume {v} size {mesh_size}")
         cubit.cmd(f"mesh volume {v}")
 
+    #for v in cubit.get_entities("volume"):
+    #    if v == v_cohesive:
+    #        # Assign sweep scheme BEFORE meshing
+    #        cubit.cmd(f"sweep volume {v} source surface {s_top}")
+    #        cubit.cmd(f"volume {v} size {mesh_size}")
+    #        cubit.cmd(f"mesh volume {v}")
+    #    else:
+    #        cubit.cmd(f"volume {v} size {mesh_size}")
+    #        cubit.cmd(f"mesh volume {v}")
+    
     # -------------------------------------------------
     # 9. Re-compute exterior faces NOW  ← NEW LOCATION
     # -------------------------------------------------
