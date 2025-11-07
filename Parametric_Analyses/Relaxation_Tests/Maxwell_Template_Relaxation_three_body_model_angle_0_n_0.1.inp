@@ -1,0 +1,105 @@
+*node
+** Our  nodes
+**
+*include, input=angle_0/mesh_0.1/include_nodes.inp
+********************************** E L E M E N T S ****************************
+*element, type=C3D8, provider=edelweiss, elset=bottom-body
+*include, input=angle_0/mesh_0.1/include_elset_bottom.inp
+
+*element, type=IQuad4, provider=interfaceelement, elset=interface-body
+*include, input=angle_0/mesh_0.1/include_elset_interface.inp
+
+*element, type=C3D8, provider=edelweiss, elset=top-body
+*include, input=angle_0/mesh_0.1/include_elset_top.inp
+
+********************************** N O D E S E T S **********************************
+*NSET, NSET=bottom-Z+
+*include, input=angle_0/mesh_0.1/include_nset_bottom-Z+.inp
+*NSET, NSET=bottom-Y+
+*include, input=angle_0/mesh_0.1/include_nset_bottom-Y+.inp
+*NSET, NSET=bottom-X+
+*include, input=angle_0/mesh_0.1/include_nset_bottom-X+.inp
+*NSET, NSET=bottom-Z-
+*include, input=angle_0/mesh_0.1/include_nset_bottom-Z-.inp
+*NSET, NSET=bottom-Y-
+*include, input=angle_0/mesh_0.1/include_nset_bottom-Y-.inp
+*NSET, NSET=bottom-X-
+*include, input=angle_0/mesh_0.1/include_nset_bottom-X-.inp
+*NSET, NSET=top-Z-
+*include, input=angle_0/mesh_0.1/include_nset_top-Z-.inp
+*NSET, NSET=top-Y+
+*include, input=angle_0/mesh_0.1/include_nset_top-Y+.inp
+*NSET, NSET=top-X-
+*include, input=angle_0/mesh_0.1/include_nset_top-X-.inp
+*NSET, NSET=top-Z+
+*include, input=angle_0/mesh_0.1/include_nset_top-Z+.inp
+*NSET, NSET=top-Y-
+*include, input=angle_0/mesh_0.1/include_nset_top-Y-.inp
+*NSET, NSET=top-X+
+*include, input=angle_0/mesh_0.1/include_nset_top-X+.inp
+
+*material, name=LinearElastic, id=linearelastic_body_1, provider=edelweissmaterial
+**Isotropic
+**E    nu
+1.0, 0.3
+
+*material, name=LinearElastic, id=linearelastic_body_2, provider=edelweissmaterial
+**Isotropic
+**E    nu
+1.0, 0.3
+
+*material, name=marmotViscoElasticInterfacematerial , id=ViscoElasticInterfaceMaterial, provider = edelweissmaterial
+** E_M, nu_M,  E_I, nu_I,  E_0, nu_0,   h,   m_Ju,  n_Ju, nKelvin_Ju, minTau_Ju,   m_Js,    n_Js, nKelvin_Js,  minTau_Js, timeToDays, MaterialID 
+ $E_M,  0.3, $E_I,  0.3, $E_0,  0.3,  $h,  $m_Ju, $n_Ju,          1,      1e-2,  $m_Js,   $n_Js,          1,       1e-2,        1e0,         0
+
+*section, name=section1, material=linearelastic_body_2, type=solid
+bottom-body
+
+*section, name=section2, material=linearelastic_body_1, type=solid
+top-body
+
+*section, name=section3, material=ViscoElasticInterfaceMaterial, type=solid
+interface-body
+
+*job, name=IQuad4job, domain=3d
+*solver, solver=NIST, name=theSolver
+
+*fieldOutput
+create=perNode, elSet=top-body, field=displacement, result=U, name=displacement_top
+create=perNode, elSet=top-body, field=displacement, result=P, name=reaction_top
+create=perNode, elSet=bottom-body, field=displacement, result=U, name=displacement_bottom
+create=perNode, elSet=bottom-body, field=displacement, result=P, name=reaction_bottom
+create=perNode, elSet=interface-body, field=displacement, result=U, name=displacement_interface
+create=perElement, elSet=top-body, quadraturePoint=0:8, result=stress , name=stress_top, f(x)='np.mean(x,axis=1)' 
+create=perElement, elSet=bottom-body, quadraturePoint=0:8, result=stress , name=stress_bottom, f(x)='np.mean(x,axis=1)' 
+
+create=perElement, elSet=interface-body, quadraturePoint=0:4, result=force , name=force_interface, f(x)='np.mean(x,axis=1)' 
+create=perElement, elSet=interface-body, quadraturePoint=0:4, result=surface stress , name=surface_stress_interface, f(x)='np.mean(x,axis=1)' 
+
+*output, type=ensight, name=Cohesive_zone_model_interface
+create=perNode, fieldOutput=displacement_interface
+create=perElement, fieldOutput=force_interface
+create=perElement, fieldOutput=surface_stress_interface
+configuration, overwrite=yes
+
+*output, type=ensight, name=Cohesive_zone_model_top
+create=perNode, fieldOutput=displacement_top
+create=perNode,  fieldOutput=reaction_top
+create=perElement, fieldOutput=stress_top
+configuration, overwrite=yes
+
+*output, type=ensight, name=Cohesive_zone_model_bottom
+create=perNode,  fieldOutput=displacement_bottom
+create=perNode,  fieldOutput=reaction_bottom
+create=perElement, fieldOutput=stress_bottom
+configuration, overwrite=yes
+
+*step, solver=theSolver, maxInc=1, minInc=1, maxNumInc=1000, maxIter=1000, stepLength=1e-8
+options, category=NISTSolver, extrapolation=off
+dirichlet, name = bottom,   nSet = bottom-Z-,  field=displacement, 1=-0.1, 2=0, 3=0, f(t)=t
+dirichlet, name = top,      nSet = top-Z+,  field=displacement, 1=0.1, 2=0, 3=0, f(t)=t
+
+*step, solver=theSolver, maxInc=0.025, minInc=0.025, maxNumInc=1000, maxIter=1000, stepLength= 0.1
+options, category=NISTSolver, extrapolation=off
+dirichlet, name = bottom,   nSet = bottom-Z-,  field=displacement, 1=-0.1, 2=0, 3=0, f(t)=1
+dirichlet, name = top,      nSet = top-Z+,  field=displacement, 1=0.1, 2=0, 3=0, f(t)=1

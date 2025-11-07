@@ -1,0 +1,6 @@
+./run_parametric_sweep_Maxwell_soft.sh 1e-8 &
+./run_parametric_sweep_Maxwell_soft.sh 1e-4 &
+./run_parametric_sweep_Maxwell_stiff.sh 1e4 &
+./run_parametric_sweep_Maxwell_stiff.sh 1e8 &
+wait
+

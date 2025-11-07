@@ -1,0 +1,24 @@
+FORMAT
+type: ensight gold
+TIME
+time set: 2 no description
+number of steps: 1
+filename start number: 0
+filename increment: 1
+time values: 0.00000000e+00
+time set: 1 no description
+number of steps: 2
+filename start number: 0
+filename increment: 1
+time values: 0.00000000e+00
+1.00000000e+00
+FILE
+file set: 2
+number of steps: 1
+file set: 1
+number of steps: 2
+GEOMETRY
+model: 2 2 Cauchy_Full_model_interface_h_0.04/geometry.geo
+VARIABLE
+vector per node: 1 1 displacement_interface Cauchy_Full_model_interface_h_0.04/displacement_interface.var
+tensor symm per element: 1 1 stress_interface Cauchy_Full_model_interface_h_0.04/stress_interface.var

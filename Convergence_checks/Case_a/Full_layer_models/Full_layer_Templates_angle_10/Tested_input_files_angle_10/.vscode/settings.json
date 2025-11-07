@@ -1,0 +1,9 @@
+{
+    "python.analysis.typeCheckingMode": "off",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportUndefinedVariable": "none",
+        "reportMissingImports": "none",
+        "reportMissingModuleSource": "none",
+        "reportUndefinedVariableFromImport": "none"
+    }
+}

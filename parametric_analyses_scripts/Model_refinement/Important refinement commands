@@ -1,0 +1,18 @@
+refine curve 17 18 19 20 25 26 27 28 numsplit 1 bias 1 depth 1 smooth
+
+delete mesh curve 37 39 40 42 propagate
+
+curve 37 39 40 42 scheme bias factor 1
+
+delete mesh curve 37 39 40 42 propagate
+
+curve in curve 37 39 40 42 interval default
+
+curve 37 39 40 42 scheme bias factor 1
+
+volume 4 redistribute nodes on
+volume 4 autosmooth target off
+mesh volume 4
+
+
+

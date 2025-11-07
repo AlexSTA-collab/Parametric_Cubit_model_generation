@@ -1,0 +1,66 @@
+FORMAT
+type: ensight gold
+TIME
+time set: 2 no description
+number of steps: 1
+filename start number: 0
+filename increment: 1
+time values: 0.00000000e+00
+time set: 1 no description
+number of steps: 43
+filename start number: 0
+filename increment: 1
+time values: 0.00000000e+00
+1.00000000e-08
+1.00000000e-08
+2.50001000e-03
+5.00001000e-03
+7.50001000e-03
+1.00000100e-02
+1.25000100e-02
+1.50000100e-02
+1.75000100e-02
+2.00000100e-02
+2.25000100e-02
+2.50000100e-02
+2.75000100e-02
+3.00000100e-02
+3.25000100e-02
+3.50000100e-02
+3.75000100e-02
+4.00000100e-02
+4.25000100e-02
+4.50000100e-02
+4.75000100e-02
+5.00000100e-02
+5.25000100e-02
+5.50000100e-02
+5.75000100e-02
+6.00000100e-02
+6.25000100e-02
+6.50000100e-02
+6.75000100e-02
+7.00000100e-02
+7.25000100e-02
+7.50000100e-02
+7.75000100e-02
+8.00000100e-02
+8.25000100e-02
+8.50000100e-02
+8.75000100e-02
+9.00000100e-02
+9.25000100e-02
+9.50000100e-02
+9.75000100e-02
+1.00000010e-01
+FILE
+file set: 2
+number of steps: 1
+file set: 1
+number of steps: 43
+GEOMETRY
+model: 2 2 Cohesive_zone_model_interface/geometry.geo
+VARIABLE
+vector per node: 1 1 displacement_interface Cohesive_zone_model_interface/displacement_interface.var
+vector per element: 1 1 force_interface Cohesive_zone_model_interface/force_interface.var
+tensor asym per element: 1 1 surface_stress_interface Cohesive_zone_model_interface/surface_stress_interface.var
