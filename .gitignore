@@ -3,6 +3,11 @@
 *.mp4
 *.png
 *.pdf
-
+*.pkl
+*.npy
 *.geo
 *.var
+*.inp
+*.log
+*.case
+*.pyc

@@ -1,0 +1,147 @@
+# Parametric Study - Quick Reference
+
+## Material Families Configuration
+
+```python
+MATERIAL_FAMILIES = {
+    "initial": {"E_M": 2e5, "E_I": 4e3, "E_0": 4e5},   # Baseline
+    "stiff":   {"E_M": 2e5, "E_I": 4e3, "E_0": 4e7},   # Stiff interface
+    "soft":    {"E_M": 2e5, "E_I": 4e3, "E_0": 4e-5},  # Soft interface
+}
+```
+
+## File Overview
+
+| File | Purpose |
+|------|---------|
+| `run_complete_workflow.sh` | **Master script** - Runs everything |
+| `run_parametric_study.sh` | Run simulations for all families |
+| `run_single_family.sh` | Run simulations for one family |
+| `run_all_convergence_analyses.sh` | Analyze all families |
+| `run_convergence_analysis.sh` | Analyze one family |
+| `Final_comparizon_convergence_fixed_range_publication.py` | Convergence analysis (from Case_a) |
+| `master_parametric_script.py` | Compare all families on one plot |
+| `mesh_generation/` | **Mesh generation scripts** (Cubit) |
+| `mesh_generation/generate_meshes.sh` | Generate all meshes |
+| `mesh_generation/copy_meshes_to_families.sh` | Copy meshes to families |
+
+## Quick Commands
+
+### First-time setup (generate meshes):
+```bash
+cd mesh_generation
+./generate_meshes.sh           # Requires Cubit
+./copy_meshes_to_families.sh
+cd ..
+```
+
+### Complete workflow (recommended):
+```bash
+./run_complete_workflow.sh
+```
+
+### Or step-by-step:
+```bash
+# Step 1: Run simulations
+./run_parametric_study.sh
+
+# Step 2: Analyze results
+./run_all_convergence_analyses.sh
+
+# Step 3: Compare families
+python master_parametric_script.py
+```
+
+### Run single family:
+```bash
+# Example: run only the "stiff" family at angle 10
+export E_M=2e5 E_I=4e3 E_0=4e7
+./run_single_family.sh stiff 10
+```
+
+### Analyze single family:
+```bash
+./run_convergence_analysis.sh initial 10
+```
+
+## Directory Structure After Running
+
+```
+Parametric_Study/
+├── initial/
+│   └── angle_10/
+│       ├── Full_layer_models/
+│       │   ├── *.inp (templates)
+│       │   ├── *_job.inp (generated)
+│       │   ├── *.case (solver output)
+│       │   └── cases/
+│       │       ├── traction_jump_h*_angle_*.pkl
+│       │       └── displacement_jump_h*_angle_*.pkl
+│       ├── Interface_models/
+│       │   └── (same structure)
+│       └── comparison_results/
+│           ├── error_L1/
+│           │   ├── *_convergence_L1.pkl ← Used by master script
+│           │   └── *.pdf
+│           ├── error_L2/
+│           ├── error_relL1/
+│           └── error_relL2/
+├── stiff/ (same structure)
+├── soft/ (same structure)
+└── comparison_plots/
+    ├── comparison_traction_jump_L2_angle10.pdf
+    └── comparison_displacement_jump_L2_angle10.pdf
+```
+
+## Key Outputs
+
+### Per-Family Results
+Location: `{family}/angle_{angle}/comparison_results/error_{ERROR_TYPE}/`
+- Error field plots for each h value
+- Convergence plots
+- **Convergence pickles** (input for master script)
+
+### Cross-Family Comparison
+Location: `comparison_plots/`
+- Plots showing all three families on same axes
+- One plot per (quantity, error_type, angle) combination
+
+## Configuration Options
+
+### Add more angles
+Edit `run_parametric_study.sh` and `master_parametric_script.py`:
+```bash
+ANGLES=(0 10 20)
+```
+
+### Change error type for comparison
+Edit `master_parametric_script.py`:
+```python
+ERROR_TYPE = "L1"  # or "L2", "relL1", "relL2"
+```
+
+### Compare different quantities
+Edit `master_parametric_script.py`:
+```python
+QUANTITIES = ["traction_jump"]  # or ["displacement_jump"] or both
+```
+
+## Dependencies
+
+- `mamba` or `conda`
+- Environment `alexandros`: edelweissfe solver
+- Environment `alexandros_Plot`: Python with ParaView, numpy, matplotlib
+- Python modules in path:
+  - `Full_Model_Evaluate_traction_jump`
+  - `Full_Model_Evaluate_displacement_jump`
+  - `Interface_Model_Evaluate_traction_jump`
+  - `Interface_Model_Evaluate_displacement_jump`
+
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| No template files | Copy `.inp` files to family directories |
+| Convergence pickles not found | Run `run_all_convergence_analyses.sh` first |
+| Module import errors | Check PYTHONPATH for postprocessing modules |
+| Mamba environment not found | Update environment names in scripts |
