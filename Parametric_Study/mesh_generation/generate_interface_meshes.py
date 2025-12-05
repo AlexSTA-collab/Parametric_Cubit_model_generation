@@ -2,28 +2,34 @@
 """
 Generate meshes and template files for parametric study.
 This script creates meshes for Interface models (with cohesive layer).
+
+NOTE: Multiple mesh resolutions are generated for convergence study.
+      HEIGHT_VALUES_INTERFACE = [0.1, 0.08, 0.06, 0.04, 0.02, 0.01]
+      (In contrast, Full Cauchy models only generate h=0.01 reference mesh)
 """
 import os
 from itertools import product
 from function_generate_template_file import write_template_file
 from function_three_body_cubit_model import generate_cubit_model
 from orientation_fix import reorder_elements
+from config_parametric_study import ANGLES, HEIGHT_VALUES_INTERFACE, OUTPUT_DIR_INTERFACE
 
-# Parameter sets for parametric study
-angles = [10]  # Can add more angles: [0, 10]
-height_values = [0.1, 0.08, 0.06, 0.04, 0.02, 0.01]  # Layer heights for convergence study (descending order)
+# Parameter sets imported from central configuration
+angles = ANGLES
+height_values = HEIGHT_VALUES_INTERFACE  # Multiple heights for convergence study
 
 print("╔════════════════════════════════════════════════════════════╗")
 print("║     MESH GENERATION FOR PARAMETRIC STUDY                   ║")
 print("║     Interface Models (with cohesive layer)                 ║")
+print("║     CONVERGENCE STUDY: Multiple mesh resolutions           ║")
 print("╚════════════════════════════════════════════════════════════╝")
 print()
 print(f"Angles: {angles}")
-print(f"Heights: {height_values}")
+print(f"Heights: {height_values}  ← Multiple resolutions for convergence")
 print()
 
 # Output to Interface_models subdirectory
-base_output_dir = "Interface_models"
+base_output_dir = OUTPUT_DIR_INTERFACE
 os.makedirs(base_output_dir, exist_ok=True)
 
 # Loop over angle and height → generate mesh

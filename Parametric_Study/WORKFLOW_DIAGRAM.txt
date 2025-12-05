@@ -1,0 +1,280 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                   PARAMETRIC STUDY WORKFLOW DIAGRAM                      ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          OPTION A: Fresh Start                          │
+│                         (RECOMMENDED - Clean)                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+    cd Parametric_Study/
+           ↓
+    ./setup_and_run.sh all all
+           ↓
+    ┌──────────────────────────┐
+    │  STEP 1: Cleanup         │
+    │  Remove: soft/           │
+    │          stiff/          │
+    │          initial/        │
+    └──────────────────────────┘
+           ↓
+    ┌──────────────────────────┐
+    │  STEP 2: Recreate        │
+    │  Create: soft/angle_X/   │
+    │          stiff/angle_X/  │
+    │          initial/angle_X │
+    │  Subdirs:                │
+    │    - Interface_models/   │
+    │    - Full_layer_models/  │
+    │    - comparison_results/ │
+    └──────────────────────────┘
+           ↓
+    ┌──────────────────────────┐
+    │  STEP 3: Run Workflow    │
+    │  (see detailed flow →)   │
+    └──────────────────────────┘
+           ↓
+    ✅ Complete - All Results Fresh
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      OPTION B: Manual Cleanup                           │
+│                        (More Control)                                   │
+└─────────────────────────────────────────────────────────────────────────┘
+
+    cd Parametric_Study/
+           ↓
+    ./cleanup_families.sh
+           ↓
+    Type "yes" to confirm
+           ↓
+    soft/, stiff/, initial/ REMOVED
+           ↓
+    ./run_workflow.sh all all
+           ↓
+    Directories auto-created + workflow runs
+           ↓
+    ✅ Complete - Manual Control
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    OPTION C: Continue Existing                          │
+│                     (Resume/Partial Run)                                │
+└─────────────────────────────────────────────────────────────────────────┘
+
+    cd Parametric_Study/
+           ↓
+    ./run_workflow.sh stiff 10
+           ↓
+    Missing directories auto-created
+           ↓
+    Only specified family/angle processed
+           ↓
+    ✅ Complete - Targeted Execution
+
+
+════════════════════════════════════════════════════════════════════════════
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    DETAILED WORKFLOW (Per Family/Angle)                 │
+└─────────────────────────────────────────────────────────────────────────┘
+
+
+For EACH family (soft, stiff, initial) × angle (0, 10):
+
+
+    START: {family}/angle_{X}/
+           ↓
+    ┌──────────────────────────────────────────────────────────────┐
+    │  PHASE 1: INTERFACE MODELS                                   │
+    │                                                               │
+    │  For h in [0.01, 0.02, 0.04, 0.06, 0.08, 0.1]:              │
+    │                                                               │
+    │    mesh_generation/Interface_models/                         │
+    │         Template_angle_{X}_h_{h}.inp                         │
+    │              ↓                                                │
+    │    Generate Job File                                         │
+    │         + Substitute E_M, E_I, E_0 (family params)          │
+    │         + Update paths to mesh_generation/angle_{X}/height_* │
+    │              ↓                                                │
+    │    {family}/angle_{X}/Interface_models/                      │
+    │         *_h_{h}_job.inp                                      │
+    │              ↓                                                │
+    │    Run Solver (edelweissfe)                                  │
+    │              ↓                                                │
+    │    Output: 3 × .case files                                   │
+    │         Cohesive_zone_model_bottom_{h}.case                  │
+    │         Cohesive_zone_model_interface_{h}.case               │
+    │         Cohesive_zone_model_top_{h}.case                     │
+    │              ↓                                                │
+    │    Run Postprocessing (pvpython)                             │
+    │         + Extract traction jumps                             │
+    │         + Extract displacement jumps                         │
+    │              ↓                                                │
+    │    Output: cases/Interface_h_{h}_angle_{X}.pkl               │
+    │                                                               │
+    └──────────────────────────────────────────────────────────────┘
+           ↓
+    ┌──────────────────────────────────────────────────────────────┐
+    │  PHASE 2: FULL LAYER MODEL (Reference)                       │
+    │                                                               │
+    │  For h = 0.01 ONLY:                                          │
+    │                                                               │
+    │    mesh_generation/Full_layer_models/                        │
+    │         Template_angle_{X}_h_0.01.inp                        │
+    │              ↓                                                │
+    │    Generate Job File                                         │
+    │         + Substitute E_M, E_I (full layer params)           │
+    │         + Update paths to mesh_generation/angle_{X}/height_* │
+    │              ↓                                                │
+    │    {family}/angle_{X}/Full_layer_models/                     │
+    │         *_h_0.01_job.inp                                     │
+    │              ↓                                                │
+    │    Run Solver (edelweissfe)                                  │
+    │              ↓                                                │
+    │    Output: 3 × .case files                                   │
+    │         Cauchy_Full_model_bottom_0.01.case                   │
+    │         Cauchy_Full_model_middle_0.01.case                   │
+    │         Cauchy_Full_model_top_0.01.case                      │
+    │              ↓                                                │
+    │    Run Postprocessing (pvpython)                             │
+    │         + Extract reference traction jumps                   │
+    │         + Extract reference displacement jumps               │
+    │              ↓                                                │
+    │    Output: cases/Full_h_0.01_angle_{X}.pkl                   │
+    │                                                               │
+    └──────────────────────────────────────────────────────────────┘
+           ↓
+    ┌──────────────────────────────────────────────────────────────┐
+    │  PHASE 3: CONVERGENCE ANALYSIS                               │
+    │                                                               │
+    │    Input:                                                     │
+    │      - Interface_models/cases/*.pkl (6 heights)              │
+    │      - Full_layer_models/cases/*.pkl (reference)             │
+    │              ↓                                                │
+    │    Run convergence_analysis.py                               │
+    │         + Compare Interface vs Full for each height          │
+    │         + Compute L1 errors                                  │
+    │         + Generate convergence plots                         │
+    │              ↓                                                │
+    │    Output: comparison_results/                               │
+    │      - Interface_vs_Full_convergence_L1_error_angle_{X}.pkl  │
+    │      - Convergence plots (*.png)                             │
+    │                                                               │
+    └──────────────────────────────────────────────────────────────┘
+           ↓
+    END: Family {family}, Angle {X} Complete
+
+
+════════════════════════════════════════════════════════════════════════════
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    CROSS-FAMILY COMPARISON                              │
+│                    (After All Families Complete)                        │
+└─────────────────────────────────────────────────────────────────────────┘
+
+
+    Input:
+      soft/angle_{X}/comparison_results/*.pkl
+      stiff/angle_{X}/comparison_results/*.pkl
+      initial/angle_{X}/comparison_results/*.pkl
+           ↓
+    Run master_parametric_script.py
+           ↓
+    Compare across all families:
+      - L1 errors vs height
+      - Convergence rates
+      - Family differences
+           ↓
+    Output: comparison_plots/angle_{X}/
+      - L1_error_traction_normal.png
+      - L1_error_traction_tangential.png
+      - L1_error_displacement_normal.png
+      - L1_error_displacement_tangential.png
+      - Convergence_rates_comparison.png
+           ↓
+    ✅ COMPLETE STUDY FINISHED
+
+
+════════════════════════════════════════════════════════════════════════════
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         DATA FLOW SUMMARY                               │
+└─────────────────────────────────────────────────────────────────────────┘
+
+
+    mesh_generation/              (READ-ONLY - Never Modified)
+         ↓
+    {family}/angle_{X}/           (WORKING - Created Fresh Each Run)
+         ↓
+    comparison_results/           (FINAL RESULTS - Per Family)
+         ↓
+    comparison_plots/             (CROSS-FAMILY COMPARISON)
+
+
+════════════════════════════════════════════════════════════════════════════
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          EXECUTION MATRIX                               │
+└─────────────────────────────────────────────────────────────────────────┘
+
+
+    ./setup_and_run.sh all all
+
+    Processes:
+    ┌─────────┬─────────┬──────────────────┬────────────────────┐
+    │ Family  │ Angle   │ Interface Models │ Full Model         │
+    ├─────────┼─────────┼──────────────────┼────────────────────┤
+    │ soft    │ 0       │ 6 heights        │ h=0.01 (ref)       │
+    │ soft    │ 10      │ 6 heights        │ h=0.01 (ref)       │
+    │ stiff   │ 0       │ 6 heights        │ h=0.01 (ref)       │
+    │ stiff   │ 10      │ 6 heights        │ h=0.01 (ref)       │
+    │ initial │ 0       │ 6 heights        │ h=0.01 (ref)       │
+    │ initial │ 10      │ 6 heights        │ h=0.01 (ref)       │
+    └─────────┴─────────┴──────────────────┴────────────────────┘
+
+    Total: 6 combinations × (6 Interface + 1 Full) = 42 simulations
+    Plus:  6 convergence analyses
+    Plus:  2 cross-family plot generations (angle 0 + angle 10)
+
+
+════════════════════════════════════════════════════════════════════════════
+
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      KEY ARCHITECTURE PRINCIPLES                        │
+└─────────────────────────────────────────────────────────────────────────┘
+
+
+    1. CENTRALIZED MESH DATA
+       • Templates and mesh data in mesh_generation/
+       • Never modified during workflow
+       • Single source of truth
+
+    2. DISTRIBUTED WORKING DIRECTORIES
+       • Each family has own working space
+       • Parallel processing possible
+       • Clean separation of results
+
+    3. AUTOMATIC DIRECTORY CREATION
+       • Workflow creates missing directories
+       • No manual setup required
+       • Consistent structure guaranteed
+
+    4. LOCATION ENFORCEMENT
+       • Scripts verify Parametric_Study/ location
+       • Prevents path errors
+       • Clear error messages
+
+    5. COMPREHENSIVE LOGGING
+       • All output captured
+       • Timestamped logs
+       • Easy debugging
+
+
+════════════════════════════════════════════════════════════════════════════
