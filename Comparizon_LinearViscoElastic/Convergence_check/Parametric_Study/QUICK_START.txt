@@ -1,0 +1,189 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                     PARAMETRIC STUDY QUICK START GUIDE                   ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+📍 ALWAYS RUN FROM: Parametric_Study/
+   (The script will verify this and exit if run from wrong location)
+
+═══════════════════════════════════════════════════════════════════════════
+
+🚀 FRESH START (Recommended)
+═══════════════════════════════════════════════════════════════════════════
+
+This completely removes soft/, stiff/, initial/ and recreates them from 
+scratch, then runs the full workflow:
+
+   cd Parametric_Study
+   ./setup_and_run.sh
+
+Optional arguments:
+   ./setup_and_run.sh all all          # All families, all angles (default)
+   ./setup_and_run.sh stiff 10         # Only stiff family, angle 10
+   ./setup_and_run.sh all 0            # All families, only angle 0
+   ./setup_and_run.sh soft all         # Only soft family, all angles
+
+═══════════════════════════════════════════════════════════════════════════
+
+🔧 MANUAL SETUP (Advanced)
+═══════════════════════════════════════════════════════════════════════════
+
+If you prefer manual control:
+
+1. Clean everything:
+   cd Parametric_Study
+   rm -rf soft stiff initial
+   
+2. Run workflow (it will auto-create directories):
+   ./run_workflow.sh all all
+
+═══════════════════════════════════════════════════════════════════════════
+
+📂 DIRECTORY STRUCTURE AFTER SETUP
+═══════════════════════════════════════════════════════════════════════════
+
+Parametric_Study/
+├── mesh_generation/              ← READ-ONLY: Centralized templates & mesh data
+│   ├── Interface_models/
+│   │   ├── angle_0/height_*/     ← Mesh data (include_*.inp)
+│   │   ├── angle_10/height_*/
+│   │   └── *.inp                 ← Templates
+│   └── Full_layer_models/
+│       ├── angle_0/height_*/
+│       ├── angle_10/height_*/
+│       └── *.inp
+│
+├── soft/                         ← WORKING: Created by workflow
+│   ├── angle_0/
+│   │   ├── Interface_models/     ← Job files, .case files, solver logs
+│   │   ├── Full_layer_models/
+│   │   └── comparison_results/   ← Final .pkl results
+│   └── angle_10/
+│       └── ...
+│
+├── stiff/                        ← Same structure as soft/
+└── initial/                      ← Same structure as soft/
+
+═══════════════════════════════════════════════════════════════════════════
+
+⚙️ WORKFLOW STAGES
+═══════════════════════════════════════════════════════════════════════════
+
+For each family (soft/stiff/initial) and angle (0/10):
+
+   1. Interface Models (h = 0.01, 0.02, 0.04, 0.06, 0.08, 0.1)
+      • Generate job files from templates
+      • Run solver → creates .case files
+      • Postprocess → extracts traction/displacement jumps
+      • Save to cases/*.pkl
+   
+   2. Full Layer Models (h = 0.01 only - REFERENCE)
+      • Generate job file from template
+      • Run solver → creates .case files
+      • Postprocess → extracts reference data
+      • Save to cases/*.pkl
+   
+   3. Convergence Analysis
+      • Compare Interface vs Full results
+      • Compute L1 errors
+      • Generate convergence plots
+      • Save to comparison_results/*.pkl
+   
+   4. Cross-Family Comparison (after all families complete)
+      • Compare soft vs stiff vs initial
+      • Generate comparative plots
+      • Save to comparison_plots/
+
+═══════════════════════════════════════════════════════════════════════════
+
+📊 OUTPUT LOCATIONS
+═══════════════════════════════════════════════════════════════════════════
+
+Individual Family Results:
+   {family}/angle_{X}/comparison_results/
+   • Interface_vs_Full_convergence_L1_error_angle_{X}.pkl
+   • Convergence plots: *.png
+
+Cross-Family Comparative Plots:
+   comparison_plots/angle_{X}/
+   • L1_error_*.png (comparing all families)
+
+Logs:
+   parametric_study_run_YYYYMMDD_HHMMSS.log
+
+═══════════════════════════════════════════════════════════════════════════
+
+🛠️ TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════════════════
+
+Error: "This script must be run from the Parametric_Study/ directory"
+→ Solution: cd to Parametric_Study/ first
+
+Error: "Template not found"
+→ Solution: Ensure mesh_generation/ has all templates
+→ Check: ls mesh_generation/Interface_models/*.inp
+
+Error: "Solver failed"
+→ Solution: Check solver log in {family}/angle_{X}/Interface_models/solver_*.log
+
+Error: "Postprocessing failed"
+→ Solution: Check postprocess log in {family}/angle_{X}/Interface_models/postprocess_*.log
+
+═══════════════════════════════════════════════════════════════════════════
+
+✅ VERIFICATION COMMANDS
+═══════════════════════════════════════════════════════════════════════════
+
+Check mesh generation ready:
+   find mesh_generation -name "*.inp" | wc -l
+   # Should show ~250 templates
+
+Check workflow progress:
+   for f in soft stiff initial; do
+     echo "$f results: $(ls $f/angle_10/comparison_results/*.pkl 2>/dev/null | wc -l)"
+   done
+
+Check final plots:
+   ls comparison_plots/angle_*/L1_error_*.png 2>/dev/null | wc -l
+
+═══════════════════════════════════════════════════════════════════════════
+
+💡 BEST PRACTICES
+═══════════════════════════════════════════════════════════════════════════
+
+1. ✅ Use setup_and_run.sh for clean runs
+   • Ensures no old data interferes with results
+   • Creates proper directory structure automatically
+   
+2. ✅ Run from Parametric_Study/ directory
+   • All paths are relative to this location
+   • Script enforces this requirement
+   
+3. ✅ Keep mesh_generation/ read-only
+   • Never modify templates directly
+   • All changes should go through mesh generation scripts
+   
+4. ✅ Check logs if something fails
+   • Main log: parametric_study_run_*.log
+   • Solver logs: {family}/angle_{X}/*/solver_*.log
+   • Postprocess logs: {family}/angle_{X}/*/postprocess_*.log
+
+═══════════════════════════════════════════════════════════════════════════
+
+📧 PARAMETER DEFINITIONS
+═══════════════════════════════════════════════════════════════════════════
+
+Material Families:
+   stiff:   E_M=2e5, E_I=4e3, E_0=4e5   (Stiff interface)
+   initial: E_M=2e5, E_I=4e3, E_0=4e3   (Matched interface)
+   soft:    E_M=2e5, E_I=4e3, E_0=4e-5  (Soft interface)
+
+Angles:
+   0°, 10° (configured in mesh_generation/config_parametric_study.py)
+
+Heights (Interface):
+   0.01, 0.02, 0.04, 0.06, 0.08, 0.1 mm
+
+Heights (Full Reference):
+   0.01 mm only
+
+═══════════════════════════════════════════════════════════════════════════
